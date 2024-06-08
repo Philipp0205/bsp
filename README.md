@@ -43,3 +43,17 @@ Once the JAR file is built, you can run it using
 - Find add-ons at [vaadin.com/directory](https://vaadin.com/directory).
 - Ask questions on [Stack Overflow](https://stackoverflow.com/questions/tagged/vaadin) or join our [Discord channel](https://discord.gg/MYFq5RTbBn).
 - Report issues, create pull requests in [GitHub](https://github.com/vaadin).
+
+## Docker 
+docker run -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -v postgres_data:/var/lib/postgresql/data -d postgres
+
+- docker ps
+- docker exec -it e6a76a5678b0 bash
+- su - postgres
+- psql
+- \l
+- \c your_database
+- \dt
+- \d your_table
+- \q
+- exit
