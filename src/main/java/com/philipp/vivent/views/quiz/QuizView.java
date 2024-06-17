@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.philipp.vivent.data.Category;
 import com.philipp.vivent.data.Question;
@@ -12,7 +17,6 @@ import com.philipp.vivent.services.CategoryService;
 import com.philipp.vivent.views.MainLayout;
 import com.philipp.vivent.views.admin.QuestionForm;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -29,9 +33,12 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
+import jakarta.annotation.security.PermitAll;
+
 @Route(value = "quiz", layout = MainLayout.class)
 @PageTitle("Quiz")
 @StyleSheet("context://style.css")
+@PermitAll
 public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 	
 	private final CategoryService service;
@@ -39,6 +46,10 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 	private Category category;
 	private List<Question> questions;
 	private Map<Integer, Boolean> results; 
+	TabSheet tabSheet; 
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	
+	private static final Logger LOGGER = LogManager.getLogger(QuizView.class);
 
 	public QuizView(CategoryService service, QuestionService questionService) {
 		this.service = service;
@@ -73,12 +84,12 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 	}
 	
 	private TabSheet buildQuestions() {
-		TabSheet tabSheet = buildTabSheet();
+		tabSheet = buildTabSheet();
 		
 		for (Question question : questions) {
 			VerticalLayout questionLayout = buildQuestionLayout(question);
-			buildAnswerButtons(questionLayout, tabSheet, question);
-			buildButtonLayout(questionLayout, tabSheet, question);
+			buildAnswerButtons(questionLayout, question);
+			buildButtonLayout(questionLayout, question);
 
 			int index = questions.indexOf(question);
 			tabSheet.add(String.valueOf(index + 1), questionLayout);
@@ -89,7 +100,7 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 		return tabSheet;
 	}
 	
-	private void buildAnswerButtons(VerticalLayout questionLayout, TabSheet tabSheet, Question question) {
+	private void buildAnswerButtons(VerticalLayout questionLayout, Question question) {
 		List<String> answers = new ArrayList<>(
 				List.of(question.getCorrectAnswer(), question.getWrongAnswer1(), question.getWrongAnswer2()));
 		Collections.shuffle(answers);
@@ -98,23 +109,21 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 
 		for (String answer : answers) {
 			Button answerButton = new Button(answer);
-			answerButton.addClickListener(e -> {
-				if (answer.equals(question.getCorrectAnswer())) {
-					answerButton.addClassName("correct-answer");
-					disableOtherButtons(answerButton, answerButtons);
-					tabSheet.getTabAt(tabSheet.getSelectedIndex()).addClassName("correct-tab");
-				} else {
-					answerButton.addClassName("wrong-answer");
-					disableOtherButtons(answerButton, answerButtons);
-					tabSheet.getTabAt(tabSheet.getSelectedIndex()).addClassName("wrong-tab");
-				}
+			answerButton.addClassName("answer-button");
+			boolean isCorrect = answer.equals(question.getCorrectAnswer());
+			answerButton.addClassName(isCorrect ? "correct-answer" : "wrong-answer");
 
-				UI.getCurrent().setPollInterval(500);
-				UI.getCurrent().addPollListener(event -> {
-					moveToNextTab(tabSheet);
-					UI.getCurrent().setPollInterval(-1); 
-				});
-			});
+//			answerButton.addClickListener(e -> {
+//				if (answer.equals(question.getCorrectAnswer())) {
+//					answerButton.addClassName("correct-answer");
+//					tabSheet.getTabAt(tabSheet.getSelectedIndex()).addClassName("correct-tab");
+//				} else {
+//					answerButton.addClassName("wrong-answer");
+//					tabSheet.getTabAt(tabSheet.getSelectedIndex()).addClassName("wrong-tab");
+//				}
+//				disableOtherButtons(answerButton, answerButtons);
+//				moveToNextTab();
+//			});
 			answerButtons.add(answerButton);
 		}
 		questionLayout.add(answerButtons.toArray(new Component[0]));
@@ -138,7 +147,7 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 	}
 
 	private TabSheet buildTabSheet() {
-		TabSheet tabSheet = new TabSheet();
+		tabSheet = new TabSheet();
 		tabSheet.getStyle().set("margin", "auto");
 		tabSheet.addThemeVariants(TabSheetVariant.LUMO_TABS_CENTERED);
 		tabSheet.setWidthFull();
@@ -164,7 +173,7 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 		dialog.open();
 	}
 	
-	private void buildButtonLayout(VerticalLayout questionLayout, TabSheet tabSheet, Question question) {
+	private void buildButtonLayout(VerticalLayout questionLayout, Question question) {
 		HorizontalLayout buttonLayout = new HorizontalLayout();
 		buttonLayout.setWidthFull();
 		buttonLayout.setJustifyContentMode(JustifyContentMode.BETWEEN);
@@ -196,10 +205,19 @@ public class QuizView extends VerticalLayout implements HasUrlParameter<String>{
 		buttonLayout.add(previous, edit, newQuestionButton, next);
 		questionLayout.add(buttonLayout);
 	}
+	
+	
+//	private void moveToNextTab() {
+//		int selectedIndex = tabSheet.getSelectedIndex();
+//		System.out.println("Selected before: " + selectedIndex);
+//		tabSheet.getTabAt(selectedIndex + 1).setEnabled(true);
+//		tabSheet.setSelectedIndex(selectedIndex + 1);
+//	}
 
-	private void moveToNextTab(TabSheet tabSheet) {
+	private void moveToNextTab() {
 		int selectedIndex = tabSheet.getSelectedIndex();
 		if (selectedIndex < questions.size() - 1) {
+			System.out.println("Selected before: " + selectedIndex);
 			tabSheet.getTabAt(selectedIndex + 1).setEnabled(true);
 			tabSheet.setSelectedIndex(selectedIndex + 1);
 		} else {

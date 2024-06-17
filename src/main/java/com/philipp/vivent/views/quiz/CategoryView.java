@@ -28,9 +28,12 @@ import com.vaadin.flow.theme.lumo.LumoUtility.MaxWidth;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
 import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
 
+import jakarta.annotation.security.PermitAll;
+
 @PageTitle("Event Overview")
 @Route(value = "", layout = MainLayout.class)
 @RouteAlias(value = "", layout = MainLayout.class)
+@PermitAll
 public class CategoryView extends Main implements HasComponents, HasStyle {
 	
 	private OrderedList imageContainer;

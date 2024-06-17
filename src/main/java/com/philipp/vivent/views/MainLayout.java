@@ -1,93 +1,60 @@
 package com.philipp.vivent.views;
 
-import org.vaadin.lineawesome.LineAwesomeIcon;
-
-import com.philipp.vivent.views.about.AboutView;
-import com.philipp.vivent.views.quiz.CategoryView;
+import com.philipp.vivent.views.login.LoginView;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
-import com.vaadin.flow.component.applayout.DrawerToggle;
-import com.vaadin.flow.component.html.Footer;
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
+import com.vaadin.flow.component.dependency.StyleSheet;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Header;
-import com.vaadin.flow.component.orderedlayout.FlexComponent.Alignment;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.Scroller;
-import com.vaadin.flow.component.sidenav.SideNav;
-import com.vaadin.flow.component.sidenav.SideNavItem;
-import com.vaadin.flow.router.PageTitle;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 
 /**
  * The main view is a top-level placeholder for other views.
  */
+@StyleSheet("context://style.css")
 public class MainLayout extends AppLayout {
 
-    private H2 viewTitle;
+	private H2 viewTitle;
 
 	public MainLayout() {
 		setPrimarySection(Section.DRAWER);
 		addHeaderContent();
-		addDrawerContent();
 	}
 
-    private void addHeaderContent() {
-        DrawerToggle toggle = new DrawerToggle();
+	private void addHeaderContent() {
+		HorizontalLayout layout = new HorizontalLayout();
+		layout.addClassName("header");
+		layout.setJustifyContentMode(FlexComponent.JustifyContentMode.BETWEEN);
+		layout.setSizeFull();
+		
+		H2 title = new H2("BSP Quiz");
+		layout.add(title, profilePicture());
 
-        viewTitle = new H2();
-        viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
-
-        addToNavbar(true, toggle, viewTitle);
-    }
-    
-	private Header addLogo() {
-		H1 logo = new H1("\uD83C\uDF77"); 
-		logo.addClassNames(LumoUtility.FontSize.XLARGE, LumoUtility.Margin.NONE); // Adjusting logo size if needed
-
-		H1 appName = new H1("Vivent!");
-		appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
-
-		HorizontalLayout layout = new HorizontalLayout(logo, appName);
-		layout.setDefaultVerticalComponentAlignment(Alignment.CENTER); // Aligns children vertically center
-		layout.setSpacing(true); // Adds space between components
-		layout.addClassNames(LumoUtility.AlignItems.CENTER, LumoUtility.JustifyContent.CENTER); // Centering items
-
-		Header header = new Header(layout);
-		return header;
+		addToNavbar(true, layout);
 	}
-	
-    private void addDrawerContent() {
-        H1 appName = new H1("My App");
-        appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
-        Header header = new Header(appName);
 
-        Scroller scroller = new Scroller(createNavigation());
+	private Button profilePicture() {
+		Button button = new Button(new Icon(VaadinIcon.USER));
+		button.addClassName("profile-button");
+		ContextMenu contextMenu = new ContextMenu(button);
+		contextMenu.setOpenOnClick(true); // This will make the menu open on a left-click
 
-        addToDrawer(header, scroller, createFooter());
-    }
+		contextMenu.addItem("Profile", e -> {
+			// Handle the click on the "Profile" item
+		});
 
-    private SideNav createNavigation() {
-        SideNav nav = new SideNav();
-        nav.addItem(new SideNavItem("Quiz", CategoryView.class, LineAwesomeIcon.TH_LIST_SOLID.create()));
-        nav.addItem(new SideNavItem("About", AboutView.class, LineAwesomeIcon.INFO_CIRCLE_SOLID.create()));
+		contextMenu.addItem("Settings", e -> {
+			// Handle the click on the "Settings" item
+		});
 
-        return nav;
-    }
+		contextMenu.addItem("Login", e -> {
+			UI.getCurrent().navigate(LoginView.class);
+		});
 
-    private Footer createFooter() {
-        Footer layout = new Footer();
-
-        return layout;
-    }
-//
-//    @Override
-//    protected void afterNavigation() {
-//        super.afterNavigation();
-//        viewTitle.setText(getCurrentPageTitle());
-//    }
-
-    private String getCurrentPageTitle() {
-        PageTitle title = getContent().getClass().getAnnotation(PageTitle.class);
-        return title == null ? "" : title.value();
-    }
+		return button;
+	}
 }
